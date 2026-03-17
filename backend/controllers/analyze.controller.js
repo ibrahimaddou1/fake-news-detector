@@ -19,8 +19,14 @@ export const analyzeContent = async (req, res) => {
 
         // 2. Appels en parallèle aux services de détection externes
         const [hfResult, googleResult] = await Promise.all([
-            analyzeWithBERT(contentToAnalyze).catch(e => ({ error: 'Service indisponible' })),
-            checkGoogleFactCheck(contentToAnalyze).catch(e => ({ claims: [] }))
+            analyzeWithBERT(contentToAnalyze).catch(e => {
+                console.error("Erreur Service Hugging Face:", e.message);
+                return { error: 'Service Hugging Face indisponible', details: e.message };
+            }),
+            checkGoogleFactCheck(contentToAnalyze).catch(e => {
+                console.error("Erreur Service Google Fact Check:", e.message);
+                return { claims: [], error: 'Service Google Fact Check indisponible', details: e.message };
+            })
         ]);
 
         // 3. Orchestration et synthèse par OpenAI
